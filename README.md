@@ -7,3 +7,5 @@
 - Yếu kém trong khi viết bài không thể không có. Kỹ năng viết văn kém, kỹ thuật cũng kém. Tuy nhiên vẫn muốn góp chút công sức, ngoài giúp đỡ chính bản thân mình thì còn có thể giúp những bạn mới tiếp xúc CTF
 
 - Về các payload trong lỗi mình sẽ cập nhật liên tục trong giới hạn kiến thức và sự tìm hiểu của mình, cũng mong cao nhân đóng góp thêm giúp mình
+
+- Về 1 số tool mình sẽ không giải thích chi tiết, các bạn hãy *research* để biết thêm về code
