@@ -37,7 +37,7 @@
 
 - VD đơn giản, table của ta chỉ có 2 cột, nếu ta thử với *ORDER BY 3* thì nó sẽ báo lỗi
 
-  ```mariadb
+  ```mysql
   MariaDB [xssuser]> select * from menu;
   +----+-----------+
   | ID | NAME_MENU |
