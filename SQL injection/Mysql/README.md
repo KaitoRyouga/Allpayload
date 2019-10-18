@@ -699,4 +699,4 @@
 
 - Sử dụng *Extractvalue function*
 
-- T
+- To be continue
