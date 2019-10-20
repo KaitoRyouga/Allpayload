@@ -263,4 +263,47 @@
   <!ENTITY entity name SYSTEM "URI" >
   ```
 
-  
+- Parameter entity:
+
+  ```xml-dtd
+  <!ENTITY % entity name "value of entity" >
+  or
+  <!ENTITY % entity name SYSTEM "URI" >
+  ```
+
+- VD entity + Internal entity
+
+  ```
+  <?xml version= "1.0" encoding= "utf-8" ?>
+  <!DOCTYPE a [
+      <!ENTITY name "nMask" >]>
+  <foo>
+          <value>&name;</value> 
+  </foo>
+  ```
+
+- VD Parameter entity + External entity
+
+  ```xml-dtd
+  <?xml version= "1.0" encoding= "utf-8" ?>
+  <!DOCTYPE a [
+      <!ENTITY % name SYSTEM "file:///etc/passwd" >
+      %name;
+  ]>
+  ```
+
+  - %name (parameter entity) được tham chiếu trong DTD, và &name (the rest of the entity) được tham chiếu bên trong xml document.
+
+- XXE vulnerability chủ yếu khai thác lỗ hổng do các tham chiếu DTD external entities gây ra. Điều quan trọng ở đây là phải xem xét loại của external entities có thể tham chiếu
+
+---
+
+### d. External entity
+
+- External entities được sử dụng trong DTDs
+
+  ```xml-dtd
+  <!ENTITY entity name SYSTEM "URI" >
+  ```
+
+- 
